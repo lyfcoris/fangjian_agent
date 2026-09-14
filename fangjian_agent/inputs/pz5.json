@@ -1,0 +1,40 @@
+{
+  "project": "某商业综合体项目（演示用模拟数据）",
+  "modelName": "地下室机电综合模型",
+  "exportTime": "2025-06-01T10:30:00",
+  "exportSystem": "BIMFACE 碰撞检查（演示格式）",
+  "clashCount": 2,
+  "clashes": [
+    {
+      "clashId": "CL-0001",
+      "clashType": "硬碰撞",
+      "severity": "高",
+      "location": {
+        "level": "B2",
+        "grid": "F轴/3轴",
+        "x": 12.45,
+        "y": -30.1,
+        "z": -5.4
+      },
+      "elements": [
+        { "id": "elem-1001", "name": "送风风管 600x400", "category": "风管" },
+        { "id": "elem-2001", "name": "喷淋主管 DN150", "category": "管道" }
+      ],
+      "clearance": -0.085,
+      "clearanceUnit": "m",
+      "detectedBy": "硬碰撞规则（公差0）",
+      "status": "待处理"
+    },
+    {
+      "id": "CL-0002",
+      "type": "软碰撞",
+      "severity": "中",
+      "position": [35.2, 12.8, -3.1],
+      "componentA": { "name": "桥架 200x100", "elementType": "桥架" },
+      "componentB": "喷淋支管 DN50",
+      "distance": 0.03,
+      "requirement": { "minClearance": 0.05 },
+      "status": "待处理"
+    }
+  ]
+}

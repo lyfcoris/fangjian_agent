@@ -1,0 +1,129 @@
+{
+  "kb": "C:\\Users\\Pomebud.L\\Desktop\\实习\\jianli-supervisor-agent\\kb\\jianli_kb.txt",
+  "entries": 144,
+  "hit@1": 0.9,
+  "hit@3": 1.0,
+  "mrr": 0.95,
+  "refuse_rate": 1.0,
+  "kb_issues": {
+    "duplicate_bodies": 0,
+    "missing_labels": 0,
+    "missing_clause_no": 0
+  },
+  "details": [
+    {
+      "id": "P1-后浇带渗漏",
+      "hit@1": true,
+      "hit@3": true,
+      "rank": 1,
+      "top1": [
+        "渗漏",
+        "接茬",
+        "注浆封堵"
+      ]
+    },
+    {
+      "id": "P2-拉结筋与斜砌",
+      "hit@1": true,
+      "hit@3": true,
+      "rank": 1,
+      "top1": [
+        "填充墙",
+        "拉结筋",
+        "植筋"
+      ]
+    },
+    {
+      "id": "P3-蜂窝麻面露筋",
+      "hit@1": true,
+      "hit@3": true,
+      "rank": 1,
+      "top1": [
+        "混凝土外观缺陷",
+        "蜂窝",
+        "麻面",
+        "露筋"
+      ]
+    },
+    {
+      "id": "P4-抹灰空鼓开裂",
+      "hit@1": true,
+      "hit@3": true,
+      "rank": 1,
+      "top1": [
+        "空鼓",
+        "开裂",
+        "返工处理"
+      ]
+    },
+    {
+      "id": "P5-检验批报验程序",
+      "hit@1": true,
+      "hit@3": true,
+      "rank": 1,
+      "top1": [
+        "验收程序",
+        "自检",
+        "报验"
+      ]
+    },
+    {
+      "id": "P6-碰撞净距不足",
+      "hit@1": true,
+      "hit@3": true,
+      "rank": 1,
+      "top1": [
+        "风管",
+        "桥架",
+        "管道间距"
+      ]
+    },
+    {
+      "id": "S1-高处作业防护缺失",
+      "hit@1": true,
+      "hit@3": true,
+      "rank": 1,
+      "top1": [
+        "高处坠落防护",
+        "临边洞口防护",
+        "安全带",
+        "脚手架"
+      ]
+    },
+    {
+      "id": "S2-临时用电隐患",
+      "hit@1": true,
+      "hit@3": true,
+      "rank": 1,
+      "top1": [
+        "触电防护",
+        "临时用电",
+        "漏电保护",
+        "接地"
+      ]
+    },
+    {
+      "id": "S3-基坑坍塌风险",
+      "hit@1": true,
+      "hit@3": true,
+      "rank": 1,
+      "top1": [
+        "坍塌防范",
+        "基坑支护",
+        "模板支撑",
+        "边坡稳定"
+      ]
+    },
+    {
+      "id": "S4-扬尘与噪声",
+      "hit@1": false,
+      "hit@3": true,
+      "rank": 2,
+      "top1": [
+        "混凝土浇筑",
+        "振捣",
+        "保护层"
+      ]
+    }
+  ]
+}

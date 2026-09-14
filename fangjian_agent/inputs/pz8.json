@@ -1,0 +1,190 @@
+{
+  "project": "某商业综合体项目（课程演示用模拟数据）",
+  "modelName": "地下室机电管线综合模型",
+  "exportTime": "2025-06-01T10:30:00",
+  "exportSystem": "BIMFACE 碰撞检查（演示格式，14 个碰撞点位）",
+  "clashCount": 14,
+  "clashes": [
+    {
+      "clashId": "CL-0001",
+      "clashType": "硬碰撞",
+      "severity": "高",
+      "location": { "level": "B2", "grid": "F轴/3轴", "x": 12.45, "y": -30.1, "z": -5.4 },
+      "elements": [
+        { "id": "elem-1001", "name": "送风风管 1200x400", "category": "风管" },
+        { "id": "elem-2001", "name": "喷淋主管 DN150", "category": "管道" }
+      ],
+      "clearance": -0.12,
+      "clearanceUnit": "m",
+      "detectedBy": "硬碰撞规则（公差0）",
+      "status": "待处理"
+    },
+    {
+      "clashId": "CL-0002",
+      "clashType": "硬碰撞",
+      "severity": "高",
+      "location": { "level": "B2", "grid": "A轴/5轴", "x": 8.2, "y": -22.6, "z": -5.1 },
+      "elements": [
+        { "id": "elem-1002", "name": "排烟风管 1000x320", "category": "风管" },
+        { "id": "elem-2002", "name": "给水管 DN100", "category": "管道" }
+      ],
+      "clearance": -0.065,
+      "clearanceUnit": "m",
+      "status": "待处理"
+    },
+    {
+      "clashId": "CL-0003",
+      "clashType": "硬碰撞",
+      "severity": "中",
+      "location": { "level": "B1", "grid": "C轴/2轴", "x": 18.75, "y": -12.3, "z": -3.2 },
+      "elements": [
+        { "id": "elem-1003", "name": "冷冻供水管 DN200", "category": "管道" },
+        { "id": "elem-2003", "name": "桥架 400x150", "category": "桥架" }
+      ],
+      "clearance": -0.03,
+      "clearanceUnit": "m",
+      "status": "待处理"
+    },
+    {
+      "id": "CL-0004",
+      "type": "软碰撞",
+      "severity": "中",
+      "position": [25.6, -18.9, -8.2],
+      "componentA": { "name": "喷淋支管 DN50", "elementType": "管道" },
+      "componentB": "消防桥架 200x100",
+      "distance": 0.02,
+      "requirement": { "minClearance": 0.05 },
+      "status": "待处理"
+    },
+    {
+      "clashId": "CL-0005",
+      "clashType": "硬碰撞",
+      "severity": "高",
+      "location": { "level": "B2", "grid": "D轴/6轴", "x": 30.1, "y": -35.4, "z": -4.8 },
+      "elements": [
+        { "id": "elem-1005", "name": "送风风管 800x300", "category": "风管" },
+        { "id": "elem-2005", "name": "梁 KL-D6（下翻梁）", "category": "结构梁" }
+      ],
+      "clearance": -0.045,
+      "clearanceUnit": "m",
+      "status": "待处理"
+    },
+    {
+      "clashId": "CL-0006",
+      "clashType": "硬碰撞",
+      "severity": "中",
+      "location": { "level": "B1", "grid": "G轴/1轴", "x": 3.6, "y": -9.8, "z": -3.6 },
+      "elements": [
+        { "id": "elem-1006", "name": "母线槽 1000A", "category": "电气" },
+        { "id": "elem-2006", "name": "给水管 DN80", "category": "管道" }
+      ],
+      "clearance": -0.018,
+      "clearanceUnit": "m",
+      "status": "待处理"
+    },
+    {
+      "clashId": "CL-0007",
+      "clashType": "硬碰撞",
+      "severity": "高",
+      "location": { "level": "B3", "grid": "B轴/3轴", "x": 14.3, "y": -42.7, "z": -7.6 },
+      "elements": [
+        { "id": "elem-1007", "name": "排烟风管 1250x400", "category": "风管" },
+        { "id": "elem-2007", "name": "喷淋主管 DN150", "category": "管道" }
+      ],
+      "clearance": -0.092,
+      "clearanceUnit": "m",
+      "status": "待处理"
+    },
+    {
+      "clashId": "CL-0008",
+      "clashType": "软碰撞",
+      "severity": "低",
+      "location": { "level": "B2", "grid": "E轴/4轴", "x": 22.4, "y": -27.3, "z": -5.0 },
+      "elements": [
+        { "id": "elem-1008", "name": "电缆桥架 300x100", "category": "桥架" },
+        { "id": "elem-2008", "name": "送风风管 630x250", "category": "风管" }
+      ],
+      "clearance": 0.035,
+      "clearanceUnit": "m",
+      "status": "待处理"
+    },
+    {
+      "clashId": "CL-0009",
+      "clashType": "硬碰撞",
+      "severity": "中",
+      "location": { "level": "B1", "grid": "F轴/5轴", "x": 27.9, "y": -15.6, "z": -3.4 },
+      "elements": [
+        { "id": "elem-1009", "name": "冷冻回水管 DN150", "category": "管道" },
+        { "id": "elem-2009", "name": "弱电桥架 300x100", "category": "桥架" }
+      ],
+      "clearance": -0.025,
+      "clearanceUnit": "m",
+      "status": "待处理"
+    },
+    {
+      "clashId": "CL-0010",
+      "clashType": "重叠",
+      "severity": "低",
+      "location": { "level": "B2", "grid": "B轴/2轴", "x": 9.7, "y": -19.4, "z": -5.6 },
+      "elements": [
+        { "id": "elem-1010", "name": "喷淋支管 DN50（图元重复）", "category": "管道" },
+        { "id": "elem-1011", "name": "喷淋支管 DN50（图元重复）", "category": "管道" }
+      ],
+      "clearance": -0.2,
+      "clearanceUnit": "m",
+      "status": "已复核待整改"
+    },
+    {
+      "clashId": "CL-0011",
+      "clashType": "硬碰撞",
+      "severity": "高",
+      "location": { "level": "B2", "grid": "H轴/2轴", "x": 5.4, "y": -33.8, "z": -4.9 },
+      "elements": [
+        { "id": "elem-1012", "name": "送风风管 1250x500", "category": "风管" },
+        { "id": "elem-2012", "name": "给水管 DN65", "category": "管道" }
+      ],
+      "clearance": -0.15,
+      "clearanceUnit": "m",
+      "status": "待处理"
+    },
+    {
+      "clashId": "CL-0012",
+      "clashType": "净距不足",
+      "severity": "中",
+      "location": { "level": "B3", "grid": "D轴/5轴", "x": 20.8, "y": -47.2, "z": -7.2 },
+      "elements": [
+        { "id": "elem-1013", "name": "冷冻供水管 DN100", "category": "管道" },
+        { "id": "elem-2013", "name": "排烟风管 800x250", "category": "风管" }
+      ],
+      "clearance": 0.04,
+      "clearanceUnit": "m",
+      "status": "待处理"
+    },
+    {
+      "clashId": "CL-0013",
+      "clashType": "硬碰撞",
+      "severity": "高",
+      "location": { "level": "B2", "grid": "E轴/1轴", "x": 2.9, "y": -25.1, "z": -5.3 },
+      "elements": [
+        { "id": "elem-1014", "name": "桥架 500x200", "category": "桥架" },
+        { "id": "elem-2014", "name": "喷淋主管 DN100", "category": "管道" }
+      ],
+      "clearance": -0.058,
+      "clearanceUnit": "m",
+      "status": "待处理"
+    },
+    {
+      "clashId": "CL-0014",
+      "clashType": "硬碰撞",
+      "severity": "中",
+      "location": { "level": "B1", "grid": "C轴/4轴", "x": 16.3, "y": -14.2, "z": -3.1 },
+      "elements": [
+        { "id": "elem-1015", "name": "给水管 DN100", "category": "管道" },
+        { "id": "elem-2015", "name": "框架柱 KZ-C4", "category": "结构柱" }
+      ],
+      "clearance": -0.012,
+      "clearanceUnit": "m",
+      "status": "待处理"
+    }
+  ]
+}
