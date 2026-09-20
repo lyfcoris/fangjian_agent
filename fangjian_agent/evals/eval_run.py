@@ -59,8 +59,8 @@ def main():
         _, entries = entries_of(c["description"])
         texts = [entry_text(e) for e in entries]
         rank = next((i for i, t in enumerate(texts, 1) if c["expect_top1"] in t), 0)
-        ok3 = any(c["expect_top1"] in t for t in texts) or \
-              any(c["expect_top3"] in t for t in texts)
+        ok3 = (any(c["expect_top1"] in t for t in texts)
+               and any(c["expect_top3"] in t for t in texts))
         hit1 += 1 if rank == 1 else 0
         hit3 += 1 if ok3 else 0
         rr_sum += (1.0 / rank) if rank else 0.0

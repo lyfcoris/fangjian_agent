@@ -1,14 +1,14 @@
 {
-  "kb": "C:\\Users\\Pomebud.L\\Desktop\\实习\\jianli-supervisor-agent\\kb\\jianli_kb.txt",
-  "entries": 144,
-  "hit@1": 0.9,
+  "kb": "C:\\Users\\Pomebud.L\\Desktop\\实习\\fangjian_agent\\kb\\jianli_kb.txt",
+  "entries": 2954,
+  "hit@1": 0.8,
   "hit@3": 1.0,
-  "mrr": 0.95,
+  "mrr": 0.8833,
   "refuse_rate": 1.0,
   "kb_issues": {
     "duplicate_bodies": 0,
     "missing_labels": 0,
-    "missing_clause_no": 0
+    "missing_clause_no": 1
   },
   "details": [
     {
@@ -39,10 +39,9 @@
       "hit@3": true,
       "rank": 1,
       "top1": [
-        "混凝土外观缺陷",
-        "蜂窝",
-        "麻面",
-        "露筋"
+        "混凝土浇筑",
+        "振捣",
+        "保护层"
       ]
     },
     {
@@ -80,14 +79,14 @@
     },
     {
       "id": "S1-高处作业防护缺失",
-      "hit@1": true,
+      "hit@1": false,
       "hit@3": true,
-      "rank": 1,
+      "rank": 2,
       "top1": [
-        "高处坠落防护",
-        "临边洞口防护",
-        "安全带",
-        "脚手架"
+        "脚手架",
+        "模板支撑",
+        "临边防护",
+        "高处作业"
       ]
     },
     {
@@ -104,25 +103,24 @@
     },
     {
       "id": "S3-基坑坍塌风险",
-      "hit@1": true,
+      "hit@1": false,
       "hit@3": true,
-      "rank": 1,
+      "rank": 3,
       "top1": [
-        "坍塌防范",
-        "基坑支护",
-        "模板支撑",
-        "边坡稳定"
+        "地基",
+        "基础"
       ]
     },
     {
       "id": "S4-扬尘与噪声",
-      "hit@1": false,
+      "hit@1": true,
       "hit@3": true,
-      "rank": 2,
+      "rank": 1,
       "top1": [
-        "混凝土浇筑",
-        "振捣",
-        "保护层"
+        "环境管理",
+        "扬尘噪声控制",
+        "污水处理",
+        "固体废物"
       ]
     }
   ]

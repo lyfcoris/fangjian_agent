@@ -48,6 +48,25 @@ DEFAULT_KB = Path(__file__).resolve().parent / "kb" / "jianli_kb.txt"
 DOTTED = re.compile(r"^(\d{1,2}(?:\.\d{1,2}){1,3})(?:\s|　|$)(.*)$")
 # 章节标题行（如 "3  安全管理"、"3.1  一般规定"）：短且不以句末标点结尾
 HEADING_LIKE = re.compile(r"^\d{1,2}(?:\.\d{1,2})?\s+\S{1,20}$")
+# 正文之后的附录/名录/说明等非条文内容（出现即截断）
+TAIL_MARK = re.compile(r"\n\s*(附录\s*[A-Za-zＡ-Ｚ]|引用标准名录|本(?:规范|文件)用词说明|目\s*次|附加说明)")
+MAX_BODY = 1200          # 单条正文上限（字）；超出的多半是误吞的附录/表格
+
+
+def clean_body(body, max_body=None):
+    """清洗单条正文：截掉附录/名录/目录，限制长度，去掉孤立页码行。"""
+    max_body = max_body or MAX_BODY
+    body = TAIL_MARK.split(body)[0]
+    lines = []
+    for ln in body.splitlines():
+        s = ln.strip()
+        if re.fullmatch(r"\d{1,3}", s):        # 孤立页码
+            continue
+        lines.append(s)
+    body = "\n".join(lines).strip()
+    if len(body) > max_body:
+        body = body[:max_body].rstrip() + "……（后续为附录/表格内容，已省略）"
+    return body
 
 
 # ---------- 1. 输入提取 ----------
@@ -83,29 +102,90 @@ def extract_pdf(path, force=False):
     text = text or ""
     n_chars = len(text.strip())
     n_clause = len(re.findall(r"(?m)^\s*\d{1,2}(?:\.\d{1,2}){1,3}\s", text))
-    print("[kb_ingest] PDF 提取：引擎 %s｜页数 %d｜字符 %d｜识别到条文号 %d 个"
-          % (engine, pages, n_chars, n_clause))
-    if pages and img_pages / pages >= 0.8:
-        print("[kb_ingest] 页数中有 %d/%d 页含图片（接近满页）" % (img_pages, pages))
+    garbage = _garbage_ratio(text)
+    img_ratio = (img_pages / pages) if pages else 0.0
+    print("[kb_ingest] PDF 提取：引擎 %s｜页数 %d｜字符 %d｜条文号 %d 个｜乱码率 %.1f%%"
+          % (engine, pages, n_chars, n_clause, garbage * 100))
+    if img_ratio >= 0.8:
+        print("[kb_ingest] 提示：%d/%d 页含图片（接近满页）" % (img_pages, pages))
 
-    bad = (n_chars < 500) or (n_clause == 0)
-    if bad and not force:
+    # 只有"真的读不到字"或"字体映射乱码严重"才中止；
+    # 没有 4.1 这类条文号 不再算失败（下面会按章节/段落切分）
+    scanned = (n_chars < 500) or (img_ratio >= 0.8 and n_chars < 2000)
+    broken = garbage >= 0.05
+    if (scanned or broken) and not force:
+        why = "扫描件（页面全是图片，没有文字层）" if scanned else "字体映射乱码（文字提取出来是错字）"
         sys.exit(
-            "[kb_ingest] 已中止：这份 PDF 提取不到可用文字（疑似**扫描件**或字体映射异常）。\n"
+            "[kb_ingest] 已中止：这份 PDF 属于【%s】。\n"
             "  按下面三种办法之一处理，再用对应命令入库：\n"
-            "  ① 换文字版：从标准全文公开系统网页直接复制条文，存 txt 后\n"
+            "  ① 换文字版：优先找 **.docx / 文字层 PDF**；或从标准全文公开系统网页复制条文存 txt 后\n"
             "     python kb_ingest.py --file \"摘录.txt\" --source \"规范全称\" --code \"GB XXXXX-XXXX\" --tags \"关键词\"\n"
-            "  ② OCR 这份扫描件：用 WPS / Adobe Acrobat / 白描等做文字识别，导出 txt 后按 ① 入库；\n"
-            "     （OCR 会有错字，入库后务必抽检条文号与数字）\n"
+            "  ② OCR 这份文件：用 WPS / Adobe Acrobat / 白描等识别文字，导出 txt 后按 ① 入库（OCR 有错字，入库后抽检条文号与数字）；\n"
             "  ③ 人工摘录：只为演示摘 20~30 条最相关的条文即可，同样走 ①。\n"
-            "  若确认提取结果可用、坚持继续，加 --force。")
+            "  若已确认提取结果可用、坚持继续，加 --force。" % why)
+    if n_clause == 0:
+        print("[kb_ingest] 提示：未识别到 4.1 这类条文号，将按【章节标题/空行段落】切分，"
+              "入库条目的来源行不含条文号（引用时只能写规范名）。想要条文号请优先用 .docx 版本。")
     return text
 
 
+def _sniff_format(path):
+    """按文件头字节判断真实格式（不看扩展名）：pdf/docx/doc/rtf/html/ole2/text"""
+    try:
+        head = Path(path).read_bytes()[:8]
+    except OSError:
+        return "text"
+    if head.startswith(b"%PDF"):
+        return "pdf"
+    if head.startswith(b"PK\x03\x04"):
+        # ZIP：Word 文档一定是 docx；其他 ZIP 交给 extract_docx 报错
+        try:
+            import zipfile
+            with zipfile.ZipFile(str(path)) as z:
+                if any(n.startswith("word/") for n in z.namelist()):
+                    return "docx"
+        except Exception:
+            pass
+        return "zip"
+    if head.startswith(b"\xd0\xcf\x11\xe0"):
+        return "doc"
+    if head.lstrip().startswith(b"{\\rtf"):
+        return "rtf"
+    low = head.lower()
+    if low.startswith(b"<html") or low.startswith(b"<!do") or low.startswith(b"<?xml"):
+        return "html"
+    return "text"
+
+
+def _rtf_to_text(raw):
+    """极简 RTF → 文本：去掉控制字与分组，还原 \\uN? 中文转义。"""
+    raw = re.sub(r"\\'([0-9a-fA-F]{2})", lambda m: bytes([int(m.group(1), 16)]).decode("latin-1"), raw)
+    raw = re.sub(r"\\u(-?\d+)\??", lambda m: chr(int(m.group(1)) % 65536), raw)
+    raw = re.sub(r"\\par[d]?\b", "\n", raw)
+    raw = re.sub(r"\\[a-zA-Z]+-?\d*\s?", "", raw)
+    raw = raw.replace("{", "").replace("}", "")
+    return raw
+
+
+def _html_to_text(html):
+    """极简 HTML → 文本：去脚本样式、块级标签转换行、剥标签、解实体。"""
+    html = re.sub(r"(?is)<(script|style).*?</\1>", " ", html)
+    html = re.sub(r"(?i)</(p|div|tr|li|h[1-6]|table)>", "\n", html)
+    html = re.sub(r"(?i)<br\s*/?>", "\n", html)
+    html = re.sub(r"<[^>]+>", "", html)
+    import html as _h
+    html = _h.unescape(html)
+    html = re.sub(r"[ \t]{2,}", " ", html)
+    html = re.sub(r"\n{3,}", "\n\n", html)
+    return html
+
+
 def extract_docx(path):
-    """提取 .docx 文字（段落 + 表格），用于喂入规范 Word 版。"""
+    """提取 .docx 文字（段落 + 表格 + 文本框 + 页眉页脚）。
+    注意：规范封面的"GB xxxxx—yyyy"往往放在**文本框**里，只读段落会漏掉编号与年份。"""
     try:
         from docx import Document
+        from docx.oxml.ns import qn
     except ImportError:
         sys.exit("[kb_ingest] 需要 python-docx：pip install python-docx")
     d = Document(str(path))
@@ -113,6 +193,20 @@ def extract_docx(path):
     for t in d.tables:
         for row in t.rows:
             parts.append("  ".join(c.text.strip() for c in row.cells))
+    # 文本框（w:txbxContent）—— 规范封面编号常在这里
+    for txbx in d.element.body.iter(qn("w:txbxContent")):
+        txt = "".join(n.text or "" for n in txbx.iter(qn("w:t")))
+        if txt.strip():
+            parts.append(txt)
+    # 页眉/页脚
+    for sec in d.sections:
+        for hf in (sec.header, sec.footer):
+            try:
+                for p in hf.paragraphs:
+                    if p.text.strip():
+                        parts.append(p.text)
+            except Exception:
+                pass
     text = "\n".join(parts)
     print("[kb_ingest] DOCX 提取：段落 %d｜字符 %d" % (len(d.paragraphs), len(text.strip())))
     return text
@@ -128,8 +222,43 @@ def normalize_text(text):
     return text
 
 
-def split_clauses(text):
-    """按行首条文号（含点，如 8.2.1）切段；无条文号时整段作为一条。"""
+def _garbage_ratio(text):
+    """粗略估计"字体映射乱码"程度：康熙部首/私用区/全角字母数字 占比。"""
+    if not text:
+        return 0.0
+    bad = len(re.findall(r"[\u2e80-\u2fdf\ue000-\uf8ff\uff10-\uff19\uff21-\uff3a\uff41-\uff5a]", text))
+    return bad / max(len(text), 1)
+
+
+def _split_by_blocks(text):
+    """没有 4.1 这类条文号时的兜底切分：
+    按章节标题（'3 术语和定义'）+ 空行段落切块；块太短则并入上一块。"""
+    blocks, cur = [], []
+    for raw in text.splitlines():
+        s = raw.strip()
+        is_head = bool(HEADING_LIKE.match(s)) and not s.endswith(("。", "；", "：", "，", ".", ";", ":"))
+        if is_head and cur:
+            blocks.append("\n".join(cur)); cur = [s]; continue
+        if not s:
+            if cur:
+                blocks.append("\n".join(cur)); cur = []
+            continue
+        cur.append(s)
+    if cur:
+        blocks.append("\n".join(cur))
+
+    merged = []
+    for b in blocks:
+        if merged and len(re.sub(r"\s+", "", b)) < 12:
+            merged[-1] = merged[-1] + "\n" + b
+        else:
+            merged.append(b)
+    return [{"num": None, "body": clean_body(b.strip(), max_body)} for b in merged if b.strip()]
+
+
+def split_clauses(text, max_body=None):
+    """按行首条文号（含点，如 8.2.1）切段；识别不到条文号时退回章节/段落切分。
+    每条正文都会经 clean_body 清洗（截附录/名录、限长、去孤立页码）。"""
     clauses, cur = [], None
     for raw in text.splitlines():
         s = raw.strip()
@@ -152,8 +281,11 @@ def split_clauses(text):
     for c in clauses:
         body = "\n".join(c["body_lines"]).strip()
         body = re.sub(r"\n{3,}", "\n\n", body)
+        body = clean_body(body, max_body)
         if body:
             out.append({"num": c["num"], "body": body})
+    if not out:                      # 一条都没切出来 → 兜底按章节/段落切
+        out = _split_by_blocks(text)
     return out
 
 
@@ -288,6 +420,8 @@ def main():
     ap.add_argument("--num", help="未识别到条文号时手工指定本条条文号（如 8.2.1）")
     ap.add_argument("--min-body", type=int, default=8,
                     help="正文最少字数（默认 8），低于此值视为表格碎片并跳过")
+    ap.add_argument("--max-body", type=int, default=MAX_BODY,
+                    help="单条正文上限字数（默认 %d），超出部分截断并加省略标记" % MAX_BODY)
     ap.add_argument("--require-keyword", action="append", metavar="词",
                     help="只入库正文含该关键词的条目，可重复指定（如 --require-keyword 验收 --require-keyword 施工）")
     ap.add_argument("--force", action="store_true",
@@ -298,19 +432,45 @@ def main():
     ap.add_argument("--dry-run", action="store_true", help="只预览不写入")
     args = ap.parse_args()
 
-    # 取原文
+    # 取原文（按扩展名自动路由：.pdf / .docx / .doc / 文本）
     if args.pdf:
         text = extract_pdf(args.pdf, force=args.force)
     elif args.file:
         fp = Path(args.file)
-        text = extract_docx(fp) if fp.suffix.lower() == ".docx" else fp.read_text(encoding="utf-8-sig")
+        if not fp.is_file():
+            sys.exit("[kb_ingest] 文件不存在：%s" % fp)
+        kind = _sniff_format(fp)
+        if kind != fp.suffix.lower().lstrip("."):
+            print("[kb_ingest] 注意：扩展名是 %s，但真实格式是 %s，已按真实格式处理。"
+                  % (fp.suffix or "(无)", kind))
+        if kind == "pdf":
+            text = extract_pdf(fp, force=args.force)
+        elif kind in ("docx", "zip"):
+            text = extract_docx(fp)
+        elif kind == "doc":
+            sys.exit("[kb_ingest] 这是真正的老式 Word 97-2003 二进制 .doc，本工具不直接解析。\n"
+                     "  请在 Word/WPS 里「另存为 → .docx」后重试（推荐），或另存为 .txt 再 --file 传入。")
+        elif kind == "rtf":
+            text = _rtf_to_text(fp.read_text(encoding="latin-1", errors="ignore"))
+        elif kind == "html":
+            raw = fp.read_bytes()
+            text = _html_to_text(raw.decode("utf-8", errors="ignore"))
+        elif kind == "ole2":
+            sys.exit("[kb_ingest] 这是 Excel/PPT 等 OLE2 复合文档，不是可入库的规范文本。")
+        else:
+            try:
+                text = fp.read_text(encoding="utf-8-sig")
+            except UnicodeDecodeError:
+                sys.exit("[kb_ingest] 该文件不是纯文本（二进制/加密/其他格式）。\n"
+                         "  支持：.docx（推荐）、.pdf、.txt/.md、.rtf、.html；\n"
+                         "  扫描版 PDF 请先 OCR。")
     else:
         text = args.text
     text = normalize_text((text or "").strip())
     if not text:
         sys.exit("[kb_ingest] 输入为空，未做任何修改。")
 
-    clauses = split_clauses(text)
+    clauses = split_clauses(text, args.max_body)
     if not clauses:
         # 未识别到任何条文号：把整段作为一条，条文号可留空或 --num 手工指定
         clauses = [{"num": None, "body": text}]
@@ -346,23 +506,23 @@ def main():
     if not entries:
         sys.exit("[kb_ingest] 没有条目通过 --require-keyword 过滤，未做任何修改。")
 
-    # 质量闸门 3：乱码 / 汉字占比异常检测
+    # 质量闸门 3：乱码检测（只有"疑似乱码"才拦截；数字多/汉字占比低只是提示）
     bad = quality_gate(entries)
+    garbled = [(e, f) for e, f in bad if "疑似乱码" in f]
     if dropped_short:
         print("已跳过 %d 条过短碎片（正文 <%d 字）" % (len(dropped_short), args.min_body))
     if dropped_kw:
         print("已跳过 %d 条不含关键词的条目（--require-keyword）" % dropped_kw)
     if bad:
-        print("注意：疑似问题条目 %d / %d 条" % (len(bad), len(entries)))
+        print("提示：%d / %d 条带可疑标记（多为数字/表格密集，属正常）：" % (len(bad), len(entries)))
         for e, f in bad[:3]:
             print("   - [%s] %s" % ("、".join(f), e["text"][:60].replace("\n", " ")))
-        ratio = len(bad) / len(entries)
-        over = (len(bad) >= 1 and ratio >= 0.5) or (len(bad) >= 3 and ratio >= 0.3)
-        if not args.force and over:
-            sys.exit("[kb_ingest] 已中止：疑似碎片/乱码比例过高（%.0f%%），未写入任何内容。\n"
-                     "  建议：① 换文字层清楚的规范版本，或先 OCR/另存为文本；\n"
-                     "        ② 加 --min-body 提高字数门槛、--require-keyword 只收相关条文；\n"
-                     "        ③ 若确认无误确需入库，加 --force 强行写入。" % (ratio * 100))
+    if garbled:
+        ratio = len(garbled) / len(entries)
+        if not args.force and ratio >= 0.3:
+            sys.exit("[kb_ingest] 已中止：疑似乱码条目占 %.0f%%，未写入任何内容。\n"
+                     "  建议换 .docx / 文字层清楚的版本，或先 OCR 再入库；确认无误可用 --force。" % (ratio * 100))
+        print("警告：%d 条疑似乱码，已按原样入库，请抽检。" % len(garbled))
 
     # 预览
     print("准备入库 %d 条：" % len(entries))
